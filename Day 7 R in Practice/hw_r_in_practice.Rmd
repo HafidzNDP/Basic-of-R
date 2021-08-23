@@ -1,0 +1,30 @@
+---
+title: "Homework R in Practice"
+output: html_document
+---
+
+```{r}
+# Install the package if you haven't!
+# install.packages('naniar')
+library(naniar)
+```
+
+```{r}
+riskfactors
+```
+
+# PERTANYAAN
+```{r}
+# Visualize the missing data in riskfactors dataset, with package that we've learned before!
+# Apa yang bisa kita simpulkan dari missing value di data ini? Ide apa yang bisa teman-teman
+# sampaikan untuk mendiagnosa kenapa missing value ini bisa terjadi?
+```
+
+
+# PACKAGE VISUALISASI
+```{r}
+#install.packages("visdat")
+library(visdat)
+```
+
+

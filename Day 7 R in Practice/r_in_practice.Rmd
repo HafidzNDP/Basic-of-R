@@ -1,0 +1,357 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+library(datasets)
+```
+
+```{r}
+head(airquality)
+```
+
+
+```{r}
+#install.packages("visdat")
+library(visdat)
+vis_miss(airquality)
+```
+
+
+
+
+
+#Missing data in practice
+```{r}
+# Create x, a vector, with values NA, NaN, Inf, ".", and "missing"
+x <- c(NA, NaN, Inf, ".", "missing")
+
+# Use any_na() and are_na() on to explore the missings
+any_na(x)
+are_na(x)
+```
+
+```{r}
+# Summarize missingness in each variable of the `airquality` dataset
+miss_var_summary(airquality)
+```
+
+```{r}
+# Summarize missingness in each case of the `airquality` dataset
+miss_case_summary(airquality)
+```
+
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+# Return the summary of missingness in each variable, 
+# grouped by Month, in the `airquality` dataset
+airquality %>% group_by(Month) %>% miss_var_summary()
+
+# Return the summary of missingness in each case, 
+# grouped by Month, in the `airquality` dataset
+airquality %>% group_by(Month) %>% miss_case_summary()
+```
+
+# Tabulating missingness
+```{r}
+# Tabulate missingness in each variable and case of the `airquality` dataset
+miss_var_table(airquality)
+miss_case_table(airquality)
+
+# Tabulate the missingness in each variable, grouped by Month, in the `airquality` dataset
+airquality %>% group_by(Month) %>% miss_var_table()
+
+# Tabulate of missingness in each case, grouped by Month, in the `airquality` dataset
+airquality %>% group_by(Month) %>% miss_case_table()
+```
+```{r}
+write.csv(pedestrians, 'pedestrians.csv')
+```
+
+
+```{r}
+#install.packages("naniar")
+library(naniar)
+```
+
+```{r}
+pedestrian
+```
+
+```{r}
+# Calculate the summaries for each run of missingness for the variable, hourly_counts
+miss_var_run(pedestrian, var = hourly_counts)
+
+# Calculate the summaries for each span of missingness, 
+# for a span of 4000, for the variable hourly_counts
+miss_var_span(pedestrian, var = hourly_counts, span_every = 4000)
+
+# For each `month` variable, calculate the run of missingness for hourly_counts
+pedestrian %>% group_by(month) %>% miss_var_run(var = hourly_counts)
+
+# For each `month` variable, calculate the span of missingness 
+# of a span of 2000, for the variable hourly_counts
+pedestrian %>% group_by(month) %>% miss_var_span(var = hourly_counts, span_every = 2000)
+```
+
+```{r}
+# Explore the strange missing values "N/A"
+miss_scan_count(data = pedestrian, search = list("N/A"))
+
+# Explore the strange missing values "missing"
+miss_scan_count(data = pedestrian, search = list("missing"))
+
+# Explore the strange missing values "na"
+miss_scan_count(data = pedestrian, search = list("na"))
+
+# Explore the strange missing values " " (a single space)
+miss_scan_count(data = pedestrian, search = list(" "))
+
+# Explore all of the strange missing values, "N/A", "missing", "na", " "
+miss_scan_count(data = pedestrian, search = list("N/A", "missing","na", " "))
+```
+
+
+```{r}
+# Print the top of the pacman data using `head()`
+head(pedestrian)
+
+# Replace the strange missing values "N/A", "na", and 
+# "missing" with `NA` for the variables, year, and sensor_name
+pedestrian_clean <- replace_with_na(pedestrian, replace = list(year = c("N/A", "na", "missing"),
+                                sensor_name = c("N/A", "na", "missing")))
+                                        
+# Test if `pacman_clean` still has these values in it?
+miss_scan_count(pedestrian_clean, search = list("N/A", "na", "missing"))
+```
+
+
+```{r}
+riskfactors
+```
+
+```{r}
+library(tidyr)
+```
+
+```{r}
+(frogger <- read.csv('frogger.csv'))
+```
+
+```{r}
+# Print the frogger data to have a look at it
+frogger
+
+# Use `complete()` on the `time` and `name` variables to  
+# make implicit missing values explicit
+(frogger_tidy <- frogger %>% complete(time, name))
+```
+
+
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+library(readr)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+# SAMPLING
+
+```{r}
+# install.packages("fst")
+library('fst')
+```
+
+```{r}
+(spotify_population <- read_fst('spotify_2000_2020.fst'))
+```
+
+```{r}
+# View the whole population dataset
+View(spotify_population)
+```
+
+# Sampling with dplyr
+```{r}
+# Sample 1000 rows from spotify_population
+spotify_sample <- spotify_population %>% 
+  slice_sample(n = 1000)
+
+# See the result
+spotify_sample
+```
+
+```{r}
+# Calculate the mean duration in mins from spotify_population
+mean_dur_pop <- spotify_population %>% 
+  summarize(mean_dur = mean(duration_minutes))
+
+# Calculate the mean duration in mins from spotify_sample
+mean_dur_samp <- spotify_sample %>% 
+  summarize(mean_dur = mean(duration_minutes))
+
+# See the results
+mean_dur_pop
+mean_dur_samp
+```
+
+# Simple sampling with base R
+```{r}
+# Get the loudness column of spotify_population
+loudness_pop <- spotify_population$loudness
+
+# Sample 100 values of loudness_pop
+loudness_samp <- sample(loudness_pop, size = 100)
+
+# See the results
+loudness_samp
+```
+
+```{r}
+# Calculate the standard deviation of loudness_pop
+sd_loudness_pop <- sd(loudness_pop)
+
+# Calculate the standard deviation of loudness_samp
+sd_loudness_samp <- sd(loudness_samp)
+
+# See the results
+sd_loudness_pop
+sd_loudness_samp
+```
+
+
+
+```{r}
+library(ggplot2)
+```
+
+# GENERATING RANDOM NUMBERS
+```{r}
+n_numbers <- 5000
+
+# Generate random numbers from ...
+randoms <- data.frame(
+  # a uniform distribution from -3 to 3
+  uniform = runif(n_numbers, min = -3, max = 3),
+  # a normal distribution with mean 5 and sd 2
+  normal = rnorm(n_numbers, mean = 5, sd = 2)
+)
+```
+
+```{r}
+# Plot a histogram of uniform values, binwidth 0.25
+ggplot(randoms, aes(uniform)) +
+  geom_histogram(binwidth = 0.25)
+```
+
+```{r}
+# Plot a histogram of normal values, binwidth 0.5
+ggplot(randoms, aes(normal)) +
+  geom_histogram(binwidth = 0.5)
+```
+
+```{r}
+(attrition_pop <- read_fst("attrition.fst"))
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+# Set the seed
+set.seed(18900217)
+
+attrition_samp <- attrition_pop %>% 
+  # Add a row ID column
+  rowid_to_column() %>% 
+  # Get 200 rows using simple random sampling
+  slice_sample(n = 200)
+```
+
+
+```{r}
+attrition_samp
+```
+
+# Systematic sampling
+```{r}
+# Set the sample size to 200
+sample_size <- 200
+
+# Get the population size from attrition_pop
+pop_size <- nrow(attrition_pop)
+
+# Calculate the interval
+interval <- pop_size %/% sample_size
+```
+
+```{r}
+# Get row indexes for the sample
+row_indexes <- seq_len(sample_size) * interval
+
+attrition_sys_samp <- attrition_pop %>% 
+  # Add a row ID column
+  rowid_to_column() %>% 
+  # Get 200 rows using systematic sampling
+  slice(row_indexes)
+```
+
+```{r}
+# See the result
+View(attrition_sys_samp)
+```
+
+
+
+# Is systematic sampling OK
+```{r}
+# Add a row ID column to attrition_pop
+attrition_pop_id <- attrition_pop %>% 
+  rowid_to_column()
+
+# Using attrition_pop_id, plot YearsAtCompany vs. rowid
+ggplot(attrition_pop_id, aes(rowid, YearsAtCompany)) +
+  # Make it a scatter plot
+  geom_point() +
+  # Add a smooth trend line
+  geom_smooth()
+```
+
+```{r}
+# Shuffle the rows of attrition_pop then add row IDs
+attrition_shuffled <- attrition_pop %>% 
+  slice_sample(prop = 1) %>% 
+  rowid_to_column()
+
+# Using attrition_shuffled, plot YearsAtCompany vs. rowid
+# Add points and a smooth trend line
+ggplot(attrition_shuffled, aes(rowid, YearsAtCompany)) +
+  geom_point() +
+  geom_smooth()
+```
+
+
+```{r}
+(coffee_ratings <- read_fst('coffee_ratings_full.fst'))
+```
+

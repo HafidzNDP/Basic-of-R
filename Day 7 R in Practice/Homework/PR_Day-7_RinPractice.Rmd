@@ -1,0 +1,139 @@
+---
+title: "Homework R in Practice"
+nama: Hafidz Nusantara Dahana Putra
+
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Install library/package
+```{r}
+install.packages('naniar')
+library(naniar)
+library(visdat)
+library(dplyr)
+library(tidyr)
+```
+
+#Data set yang akan digunakan
+```{r}
+riskfactors
+str(riskfactors)
+```
+
+# Home Work
+# Visualize the missing data in riskfactors dataset, with package that we've learned before!
+```{r}
+riskfactors%>%vis_miss()
+```
+# Apa yang bisa kita simpulkan dari missing value di data ini?
+```{r}
+sum(is.na(riskfactors))
+```
+
+
+```{r}
+miss_var_summary(riskfactors)
+```
+```{r}
+miss_case_summary(riskfactors)
+```
+#Ide apa yang bisa teman-teman sampaikan untuk mendiagnosa kenapa missing value ini bisa terjadi?
+
+#Investigating missingness of pregnant
+```{r}
+riskfactors%>%arrange(age)%>%vis_miss()
+```
+dari invetigasi data, mayoritas pada pertanyaan mengenai pregnan mengalami missing data. Setelah kita arrange terlihat bawah usia muda dan usia tua mengalami hampir seluruhnya mengalami missing data. hal tersebut bisa dikarenakan faktor privasi yang membuat mereka tidak mau menjawab.
+
+#Investigeting missingness of Smoke
+```{r}
+riskfactors%>%arrange(smoke_100)%>%vis_miss()
+```
+Dari data diatas setelah ketika diarrange berdasarkan smoke_100, dapat dilihat bawah mayoritas data rokok perhari, rokok last dan rokok stop banyak mengalami kehilangan data pada saat jawabnya no. hal tersebut bisa terjadi dikarenakan pemberi kuesioner menskip pertanyaan tersebut saat orang yang ditanya menjawab tidak. terlihat juga pada visual antara smoke stop dan smoke last. Saat smoke_stop mengalami missing data smoke_last terisi dan juga sebaliknya. Hal ini menandakan bawah surveyor hanya menanyakan sala satu dari dua pertanyaan tersebut.
+
+#Investigeting missingness of drink
+```{r}
+riskfactors%>%arrange(drink_any)%>%vis_miss()
+```
+Dari data diatas dapat dilihat, ketika kita mengarrange bedasarkan drink_any kita menemukan ketika orang menjawab tidak maka langsung mengalami missing value. hal tersebut bisa jadi dikarenakan pertanyaan itu dilewatkan atau tidak ditanyakan lagi sehingga terjadi missing value.
+#investigeting missing value off healtpoor
+```{r}
+#identifikasi ulang
+riskfactors_fill%>%arrange(health_physical,health_mental)%>%vis_miss()
+```
+
+Dari data diatas dapat kita liha bila heal_physych dan health_mental 0 maka data healtpoor akan mengalami missing, hal tersebut dikarenakan jawaban sudah ketebak akan menjadi 0.
+#Tindakan yang dilakukan
+Kita mengetahui pada kolom drink dan smoke terdapat missing value karena pertanyaan tersebut tidak ditanyakan setelah pertanyaan awal yang berkaitan tersebut jawabanya tidak. Jawaban yang akan diberikan pada pertanyaan tersebut juga sudah bisa kita tebak akan menjawab tidak sehingga kita bisa mereplace missing value tersebut dengan jawaban "No".
+```{r}
+#replace data rokok yang hilang dengan jawaban "no"(0)
+Data_rokok <- riskfactors%>%mutate(smoke_days_fill = ifelse(is.na(smoke_days),0,smoke_days))%>%mutate(smoke_last_fill = ifelse(is.na(smoke_last),0,smoke_last))%>%mutate(smoke_stop_fill = ifelse(is.na(smoke_stop),0,smoke_stop))%>%select(-smoke_days,-smoke_last,-smoke_stop)
+
+#replace data drink yang hilang dengan jawaban "no" (0)
+drink <- Data_rokok%>%mutate(drink_days_fill=ifelse(is.na(drink_days),0,drink_days))%>%mutate(drink_avarage_fill=ifelse(is.na(drink_average),0,drink_average))%>%select(-drink_average,-drink_days)
+
+#repalce pregnant yang dengan "privasi" (3)
+preg <- drink%>%mutate(pregnant_fill=ifelse(is.na(pregnant),"3",pregnant))%>%select(-pregnant)
+
+#replace healt_poor dengan jawaban 0
+riskfactors_fix <- preg%>%mutate(healt_poor_fill=ifelse(is.na(health_poor),0,health_poor))%>%select(-health_poor)
+```
+
+#identifikasi ulang
+```{r}
+riskfactors_fix%>%arrange(income)%>%vis_miss()
+```
+#summary missing data
+```{r}
+miss_var_summary(riskfactors_fix)
+```
+Dari data diatas terlihat data yang hilang kurang dari 5% sehingga bisa kita tambahkan data tersebut menggunakan mean jiga data berbentu int/num dan modus jika data berbentuk faktor.
+```{r}
+str(riskfactors_fix)
+```
+#penambahan data
+```{r}
+risk_fix <- riskfactors_fix%>%
+  mutate(bmi=ifelse(is.na(bmi),
+          mean(bmi,na.rm=T),bmi))%>%
+  mutate(weight_lbs=ifelse(is.na(weight_lbs),
+          mean(weight_lbs,na.rm=T),weight_lbs))%>%
+  mutate(diet_fruit=ifelse(is.na(diet_fruit),
+          mean(diet_fruit,na.rm=T),diet_fruit))%>%
+  mutate(diet_salad=ifelse(is.na(diet_salad),
+          mean(diet_salad,na.rm=T),diet_salad))%>%
+  mutate(diet_potato=ifelse(is.na(diet_potato),
+          mean(diet_potato,na.rm=T),diet_potato))%>%
+  mutate(diet_juice=ifelse(is.na(diet_juice),
+          mean(diet_juice,na.rm=T),diet_juice))%>%
+  mutate(diet_carrot=ifelse(is.na(diet_carrot),
+          mean(diet_carrot,na.rm=T),diet_carrot))%>%
+  mutate(diet_vegetable=ifelse(is.na(diet_vegetable),
+          mean(diet_vegetable,na.rm=T),diet_vegetable))%>%
+  mutate(height_inch=ifelse(is.na(height_inch),
+          mean(height_inch,na.rm=T),height_inch))%>%
+  mutate(marital=ifelse(is.na(marital),
+          mode(marital),marital))%>%
+  mutate(veteran=ifelse(is.na(veteran),
+          mode(veteran),veteran))%>%
+  mutate(hispanic=ifelse(is.na(hispanic),
+          mode(hispanic),hispanic))%>%
+  mutate(provide_care=ifelse(is.na(provide_care),
+          mode(provide_care),provide_care))%>%
+  mutate(activity_limited=ifelse(is.na(activity_limited),
+          mode(activity_limited),activity_limited))%>%
+  mutate(drink_any=ifelse(is.na(drink_any),
+          mode(drink_any),drink_any))%>%
+  mutate(smoke_100=ifelse(is.na(smoke_100),
+          mode(smoke_100),smoke_100))%>%
+  mutate(education=ifelse(is.na(education),
+          mode(education),education))
+vis_miss(risk_fix)
+```
+
+```{r}
+sum(is.na(risk_fix))
+```
+
