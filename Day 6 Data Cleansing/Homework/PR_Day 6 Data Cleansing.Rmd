@@ -1,0 +1,40 @@
+---
+#Home Work Pertemuan ke-6 Data Cleansing
+Nama : Hafidz Nusantara Dahana Putra
+---
+
+```{r}
+# Load the necessary packages
+library(readr)
+library(stringr)
+library(dplyr)
+```
+
+```{r}
+# Import CSV for prices
+(airbnb_price <- read_csv('airbnb_price.csv')) 
+```
+
+# What is the average price of total listings?
+# Step 1 cari tau tipe data
+```{r}
+class(airbnb_price$price)
+mean(airbnb_price$price)
+```
+
+#step 2 ubah data menjadi numeric dan pangkas bagian char
+```{r}
+airbnb_price%>%mutate(price_trimmed=as.numeric(str_remove(airbnb_price$price,"dollars"))) -> airbnb_price_trimed
+airbnb_price_trimed
+
+```
+
+#step 3 cari rata-rata
+```{r}
+as.numeric(airbnb_price_trimed$price_trimmed)
+mean(airbnb_price_trimed$price_trimmed)
+```
+
+```
+
+
