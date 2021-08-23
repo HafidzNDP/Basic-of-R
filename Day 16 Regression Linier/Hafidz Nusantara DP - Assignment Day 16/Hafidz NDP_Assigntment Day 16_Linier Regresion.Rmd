@@ -1,0 +1,193 @@
+---
+title: Home Work Regresi Linier Regular
+Nama : Hafidz Nusantara DP 
+---
+About the Data
+```{r}
+#library
+library(caTools)
+library(dplyr)
+library(psych)
+library(glmnet)
+
+#data
+data <- read.csv("Data set.csv")
+glimpse(data)
+```
+
+
+    The data is about predicting housing price (medv) in Boston city, features:
+    Criminal rate (crim)
+    Residential land zoned proportion (zn)
+    Non-retail business acres proportion (indus)
+    Is bounds with river (chas)
+    Nitrogen oxides concentration (nox)
+    Number rooms average (rm)
+    Owner age proportion (age)
+    Weighted distance to cities (dis)
+    Accessibility index (rad)
+    Tax rate (tax)
+    Pupil-teacher ratio (ptratio)
+    Black proportion (black)
+    Percent lower status (lstat)
+
+Instructions: 
+
+Perform the workflow presented above
+1. Split data: train - validate - test (point: 5)
+```{r}
+#Prepare for Sample
+set.seed(999)
+sample <- sample.split(data$medv,SplitRatio = .80)
+pre_train <- subset(data,sample==T)
+sample_train <- sample.split(pre_train$medv,SplitRatio = .80)
+
+#Train-Validate-Test
+data_train <- subset(pre_train, sample_train==T)
+data_vaidate <- subset(pre_train, sample_train==F)
+data_test <- subset(data, sample==F)
+```
+
+2. Draw correlation plot on training data (point: 5)
+```{r, size= "Huge"}
+#Draw correlation plot
+pairs.panels(data_train, method = "pearson", hist.col =, density = T, ellipses = T)
+```
+karena rad dan tax memiliki corelation yang tunggi, maka kita perlu eliminasi guna menghindari terjadinya multicoralation
+```{r}
+drop <- c("tax")
+data_train <- data_train %>% select(-tax)
+data_test <- data_test %>% select(-tax)
+```
+
+
+3. Fit models on training data (lambdas = [0.01, 0.1, 1, 10]) (point:60)
+```{r}
+#Featur procesing
+x <- model.matrix(medv ~ ., data_train)[,-1]
+y <-  data_train$medv
+
+
+```
+
+
+    Ridge regression
+```{r}
+#ridge regression (rr)
+rr_0.01 <- glmnet(x, y, alpha = 0, lambda = 0.01)
+coef(rr_0.01)
+
+rr_0.1 <- glmnet(x, y, alpha = 0, lambda = 0.1)
+coef(rr_0.1)
+
+rr_1 <- glmnet(x, y, alpha = 0, lambda = 1)
+coef(rr_1)
+
+rr_10 <- glmnet(x, y, alpha = 0, lambda = 10)
+coef(rr_10)
+```
+    
+    
+    LASSO
+```{r}
+#lasso regresion (lr)
+lr_0.01 <- glmnet(x, y, alpha = 1, lambda = 0.01)
+coef(lr_0.01)
+
+lr_0.1 <- glmnet(x, y, alpha = 1, lambda = 0.1)
+coef(lr_0.1)
+
+lr_1 <- glmnet(x, y, alpha = 1, lambda = 1)
+coef(lr_1)
+
+lr_10 <- glmnet(x, y, alpha = 1, lambda = 10)
+coef(lr_10)
+```
+    
+
+4. Choose the best lambda from the validation set (point: 20)
+```{r}
+#membuat data validation
+data_vaidate <- data_vaidate%>%select(-tax)
+x_valid <- model.matrix(medv ~ ., data_vaidate)[,-1]
+y_valid <-  data_vaidate$medv
+
+```
+
+
+    Use RMSE as metric
+    Interpret the coefficients of the best model: 
+    1). Ridge regression 
+```{r}
+rmse_rr_0.01 <- sqrt(mean((y_valid - predict(rr_0.01,x_valid))^2))
+rmse_rr_0.01 #5.152692 <- Best
+
+
+rmse_rr_0.1 <- sqrt(mean((y_valid - predict(rr_0.1,x_valid))^2))
+rmse_rr_0.1 #5.167287
+
+rmse_rr_1 <- sqrt(mean((y_valid - predict(rr_1,x_valid))^2))
+rmse_rr_1  #5.328041
+
+rmse_rr_10 <- sqrt(mean((y_valid - predict(rr_10,x_valid))^2))
+rmse_rr_10 #6.480202
+```
+    
+    
+    2). LASSO
+```{r}
+rmse_lr_0.01 <- sqrt(mean((y_valid - predict(lr_0.01,x_valid))^2))
+rmse_lr_0.01 #5.159272 <- Best
+
+
+rmse_lr_0.1 <- sqrt(mean((y_valid - predict(lr_0.1,x_valid))^2))
+rmse_lr_0.1 #5.257598
+
+rmse_lr_1 <- sqrt(mean((y_valid - predict(lr_1,x_valid))^2))
+rmse_lr_1  #5.710749
+
+rmse_lr_10 <- sqrt(mean((y_valid - predict(lr_10,x_valid))^2))
+rmse_lr_10 #10.03907
+```
+    
+
+5. Evaluate the best models on the test data (+ interpretation) (point: 10)
+```{r}
+#test data
+x_test <- model.matrix(medv ~ ., data_test)[,-1]
+y_test <-  data_test$medv
+```
+
+    MAE
+```{r}
+#MAE ridge regresion
+MAE_rr_best <- mean(abs(y_test-predict(rr_0.01, x_test)))
+MAE_rr_best
+
+#MAE laso regresion
+MAE_lr_best <- mean(abs(y_test-predict(lr_0.01, x_test)))
+MAE_lr_best
+```
+    MAPE
+```{r}
+#MAPE ridge regresion
+MAPE_rr_best <- mean(abs((predict(rr_0.01, x_test)-y_test))/y_test)
+MAE_rr_best
+
+#MAPE laso regresion
+MAPE_lr_best <- mean(abs((predict(lr_0.01, x_test)-y_test))/y_test)
+MAPE_lr_best
+```
+    
+    RMSE
+```{r}
+#RMSE ridge regresion
+rmse_rr_best <- sqrt(mean((y_test - predict(rr_0.01,x_test))^2))
+rmse_rr_best
+
+#RMSE lasso regresion
+rmse_lr_best <- sqrt(mean((y_test - predict(lr_0.01,x_test))^2))
+rmse_lr_best
+```
+    
+    
