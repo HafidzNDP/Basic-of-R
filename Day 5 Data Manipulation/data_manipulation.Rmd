@@ -1,0 +1,232 @@
+---
+title: "Data Manipulation"
+output: html_document
+---
+
+```{r}
+babynames <- read_rds("babynames.rds")
+```
+
+```{r}
+babynames %>%
+  # Filter for the year 1990
+  filter(year == 1990) %>%
+  # Sort the number column in descending order 
+  arrange(desc(number))
+```
+
+```{r}
+babynames %>%
+  # Find the most common name in each year
+  group_by(year) %>%
+  top_n(1, number)
+```
+
+```{r}
+selected_names <- babynames %>%
+  # Filter for the names Steven, Thomas, and Matthew 
+  filter(name %in% c("Steven", "Thomas", "Matthew"))
+```
+
+
+```{r}
+selected_names <- babynames %>%
+  # Filter for the names Steven, Thomas, and Matthew 
+  filter(name %in% c("Steven", "Thomas", "Matthew"))
+
+# Plot the names using a different color for each name
+ggplot(selected_names, aes(x = year, y = number, color = name)) +
+  geom_line()
+```
+
+
+
+```{r}
+# Calculate the fraction of people born each year with the same name
+babynames %>%
+  group_by(year) %>%
+  mutate(year_total = sum(number)) %>%
+  ungroup() %>%
+  mutate(fraction = number / year_total)
+```
+
+
+
+```{r}
+# Calculate the fraction of people born each year with the same name
+babynames %>%
+  group_by(year) %>%
+  mutate(year_total = sum(number)) %>%
+  ungroup() %>%
+  mutate(fraction = number / year_total) %>%
+  # Find the year each name is most common
+  group_by(name) %>%
+  top_n(1, fraction)
+```
+
+
+```{r}
+babynames %>%
+  # Add columns name_total and name_max for each name
+  group_by(name) %>%
+  mutate(name_total = sum(number),
+         name_max = max(number))
+```
+
+```{r}
+babynames %>%
+  # Add columns name_total and name_max for each name
+  group_by(name) %>%
+  mutate(name_total = sum(number),
+         name_max = max(number)) %>%
+  # Ungroup the table 
+  ungroup() %>%
+  # Add the fraction_max column containing the number by the name maximum 
+  mutate(fraction_max = number / name_max)
+```
+
+
+```{r}
+names_normalized <- babynames %>%
+                     group_by(name) %>%
+                     mutate(name_total = sum(number),
+                            name_max = max(number)) %>%
+                     ungroup() %>%
+                     mutate(fraction_max = number / name_max)
+```
+
+
+```{r}
+names_filtered <- names_normalized %>%
+  # Filter for the names Steven, Thomas, and Matthew
+  filter(name %in% c("Steven", "Thomas", "Matthew"))
+
+# Visualize these names over time
+ggplot(names_filtered, aes(x = year, y = fraction_max, color = name)) +
+  geom_line()
+```
+
+
+
+
+```{r}
+# Calculate the fraction of people born each year with the same name
+babynames_fraction <- babynames %>%
+  group_by(year) %>%
+  mutate(year_total = sum(number)) %>%
+  ungroup() %>%
+  mutate(fraction = number / year_total)
+```
+
+
+```{r}
+babynames_fraction %>%
+  # Arrange the data in order of name, then year 
+  arrange(name, year) %>%
+  # Group the data by name
+  group_by(name) %>%
+  # Add a ratio column that contains the ratio of fraction between each year 
+  mutate(ratio = fraction / lag(fraction))
+```
+
+
+```{r}
+babynames_ratios_filtered <- babynames_fraction %>%
+                     arrange(name, year) %>%
+                     group_by(name) %>%
+                     mutate(ratio = fraction / lag(fraction)) %>%
+                     filter(fraction >= 0.00001)
+```
+
+
+```{r}
+babynames_ratios_filtered %>%
+  # Extract the largest ratio from each name 
+  top_n(1, ratio) %>%
+  # Sort the ratio column in descending order 
+  arrange(desc(ratio)) %>%
+  # Filter for fractions greater than or equal to 0.001
+  filter(fraction >= 0.001)
+```
+
+
+
+
+
+
+
+
+
+
+
+# JOINING
+```{r}
+sets <- read_rds("sets.rds")
+parts <- read_rds("parts.rds")
+part_categories <- read_rds("part_categories.rds")
+```
+
+
+```{r}
+# Add the correct verb, table, and joining column
+parts %>% 
+	inner_join(part_categories, by = c("part_cat_id" = "id"))
+```
+
+
+```{r}
+# Use the suffix argument to replace .x and .y suffixes
+parts %>% 
+	inner_join(part_categories, by = c("part_cat_id" = "id"), suffix = c("_part", "_category"))
+```
+
+```{r}
+inventory_parts <- read_rds("inventory_parts.rds")
+```
+
+```{r}
+# Combine the parts and inventory_parts tables
+parts %>%
+	inner_join(inventory_parts, by = "part_num")
+```
+
+
+```{r}
+# Combine the parts and inventory_parts tables
+inventory_parts %>%
+	inner_join(parts, by = "part_num")
+```
+
+# Joining three tables
+```{r}
+inventories <- read_rds("inventories.rds")
+colors <- read_rds("colors.rds")
+```
+
+```{r}
+sets %>%
+	# Add inventories using an inner join 
+	inner_join(inventories, by = "set_num") %>%
+	# Add inventory_parts using an inner join 
+	inner_join(inventory_parts, by = c("id" = "inventory_id"))
+```
+
+
+# What's the most common color?
+```{r}
+# Add an inner join for the colors table
+sets %>%
+	inner_join(inventories, by = "set_num") %>%
+	inner_join(inventory_parts, by = c("id" = "inventory_id")) %>%
+	inner_join(colors, by = c("color_id" = "id"), suffix = c("_set", "_color"))
+```
+
+```{r}
+# Count the number of colors and sort
+sets %>%
+	inner_join(inventories, by = "set_num") %>%
+	inner_join(inventory_parts, by = c("id" = "inventory_id")) %>%
+	inner_join(colors, by = c("color_id" = "id"), suffix = c("_set", "_color")) %>%
+	count(name_color, sort = TRUE)
+```
+
