@@ -1,0 +1,208 @@
+---
+title: "PR Pertemuan 10 - Data Visualisasu" 
+Nama : Hafidz Nusantara Dahana Putra
+---
+#Soal
+Lakukan analisis dari data set yang telah diberikan, bisa dengan menggabungkan beberapa data atau hanya satu namun tentukan terlebih dahulu masalahnya. Penilaian akan dilakukan berdasarkan :
+1. Kompleksitas data
+2. Interpretasi hasil evaluasi
+3. Estetika hasil visualisasi.
+
+#Masalah
+Perusahaan mendapatkan investor baru untuk pengembangan usaha. Bos saya meminta saya untuk membuat analisa dari kondisi 3 tahun kebelakang untuk mengetahui bagaimana kondisi perusahaan, dan kira-kira strategi pengembangan apa yang tepat untuk dilakukan. 
+
+#Jawab
+sebagai seorang data analis yang pertama menginstall terlebih dahulu library yang diperlukan
+
+#instal library
+```{r}
+#install.packages("readr")
+library(readr)
+
+#install.packages("dplyr")
+library(dplyr)
+
+#install.packages("tidyverse")
+library(tidyverse)
+
+#install.packages("skimr")
+library(skimr)
+library(lubridate)
+```
+
+Setalah library berhasil di instal selanjutnya import data yang dibutuhkan.
+#import data
+```{r}
+customer <- read.csv("olist_customers_dataset.csv")
+order_item <- read.csv("olist_order_items_dataset.csv")
+payment <- read.csv("olist_order_payments_dataset.csv")
+order <- read.csv("olist_orders_dataset.csv")
+produk <- read.csv("olist_products_dataset.csv")
+category_name <- read.csv("product_category_name_translation.csv")
+
+glimpse(customer)
+glimpse(order_item)
+glimpse(payment)
+glimpse(order)
+glimpse(produk)
+glimpse(category_name)
+
+sum(is.na(produk))
+```
+
+Karena data terpencar, Kita perlu menggabung menjadi satu terlebih dahulu agar lebih mudah diolah.
+#gabungkan data set agar menjadi lebih mudah
+```{r}
+data_set <- order_item %>%
+  inner_join(order, by = "order_id")%>%
+  inner_join(payment, by = "order_id")%>%
+  inner_join(produk, by = "product_id")%>%
+  inner_join(category_name, 
+             by = c("product_category_name"=
+                   "product_category_name_english"))%>%
+  inner_join(customer, by = c("customer_id"))%>%
+  arrange("order_purchase_timestamp")
+
+             
+glimpse(data_set)
+```
+
+Kita olah dulu data tanggal menjadi format Date.
+#merubah data faktor menjadi tanggal
+```{r}
+pr <- data_set%>%
+  mutate(tanggal_pembelian = as.Date(order_purchase_timestamp))%>%
+  mutate(tanggal_pengiriman = 
+           as.Date(order_delivered_carrier_date))%>%
+  mutate(tanggal_diterima = 
+           as.Date(order_delivered_customer_date))
+pr
+
+
+```
+
+
+Setelah data siap digunakan, hal yang perlu dilakukan sebagai seorang analis untuk mengembangkan perusahaannya adalah melihat bagaimana pertumbuhan penjualan sebagai indikator perkembangan perusahaan.
+#PR 1 Melihat penjualan per-tahun
+```{r}
+#merubah format menjadi quarter/dan memfilter potensi pendapatan
+pr_1 <- pr%>%mutate(tahun_pembelian= 
+                      lubridate::year(pr$tanggal_pembelian))%>%
+  mutate(revenue = ifelse(order_status%in%"delivered",price,0))%>%
+  mutate(potensi_pendapatan = 
+           ifelse(order_status%in%c("invoiced","processing","73"),
+                  price,0))
+
+
+#mengroupkan berdasarkan taun pembelian             
+transaksi_pertahun <- pr_1%>%
+  group_by(tahun_pembelian)%>%
+  summarise(total_transaksi = sum(revenue), potensi = sum(potensi_pendapatan))%>%ungroup()
+
+
+transaksi_pertahun
+
+#total penjualan tahunan
+plot(transaksi_pertahun$tahun_pembelian, transaksi_pertahun$total_transaksi/10, xlab = "Tahun Berjalan", ylab = "Penjualan", type = "o", lty = 1, col = "blue", bty = "n", main = "Pendapatan Perusahaan")
+lines(transaksi_pertahun$tahun_pembelian, transaksi_pertahun$potensi, type = "o", col = "red", lty = 2) 
+ legend(
+  "topleft", 
+  legend = c("Reveneu", "Potensi Pendapatan"), 
+  col = c("blue", "red"), 
+  lty = c(1,2), cex = 0.7
+)
+
+
+```
+Kita bisa lihat dari grafik diatas line berwarna biru merupakan trend pendapatan yang diolah dari total penjualan yang sudah terdelivered, sedangkan warna merah merupakan potensi pendapatan yang diolah dari seluruh produk yang belum terdelivered ke pelanggan. Dikatakan sebagai potensi karena masih ada kemungkinan bahwa bahwa barang tidak sampai kepelanggan dan pelanggan meminta uangnya kembali.
+
+Dari trend diatas bisa diketahui bahwa produk penjualan di tahun 2018 mengalami trend penurunan, begitu juga dengan potensi pendapatan sehingga dapat diketahui bahwa reveneu diatas memang turun bukan karena piutang yang tidak tertagihan.
+
+Setelah mengetahui reveneu turun kita cari gmana perfoma produk yang telah terjual lebih dari 1000/terfavorit dari tahun ke tahun.
+
+#produk apa yang paling populer setiap tahunnya?
+```{r}
+name_produk <- pr%>%group_by(ï..product_category_name)%>%summarise(total = sum(order_item_id))%>%filter(total>=1000)
+name_produk
+
+pr_2 <- pr%>%
+  mutate(tahun_pembelian_produk= 
+           as.numeric(lubridate::year(pr$tanggal_pembelian)))%>%
+  mutate(produk = 
+           ifelse(product_category_name%in%name_produk$ï..product_category_name,product_category_name,NA))
+
+pr_2$produk
+
+test <- pr_2%>%group_by(tahun_pembelian_produk)%>%select(tahun_pembelian_produk,produk)%>%table(.)
+
+test
+
+#Barplot
+barplot(test, beside = T, legend.text = rownames(test), args.legend = list(title = "Tahun", cex = 0.7, x = "topleft"), col = rainbow(3), main = "Pertumbuhan produk")
+
+```
+Dari ketiga perfoma diatas dapat dilihat produk console games dan cool stuff mengalami penurun namun disisi lain pet_shop mengalami peningkatan. sehingga kita harus mengevaluasi dan mengoptimalkan pemasaran pada produk utama yang sedang mengalami penurunan tersebut.
+
+untuk mengoptimalkan pemasaran kita juga harus memilih lokasi spesifik agar pengoptimalan lebih efektif. Untuk melihat hal tersebut kita harus mengetahui kota mana yang menjadi pasar terbesar kita, jika di kota tersebut mengalami penurunan berarti kita harus evaluasi, namun jika kota tersebut mengalami kenaikan kita bisa mencari market dikota lain sebagai pangsa pasar kita.
+
+#negara yang paling banyak membeli
+```{r}
+city <- pr%>% count(customer_city)%>%
+            arrange(desc(n))%>%
+              filter(n>=150)
+city
+
+pr_3 <- pr%>%
+  mutate(tahun_pembelian_produk = 
+           as.numeric(lubridate::year(pr$tanggal_pembelian)))%>%
+  mutate(jumlah_order = as.character( ifelse(customer_city%in%city$customer_city, customer_city,NA)))
+
+pr_3$jumlah_order
+
+test_1 <- pr_3%>%group_by(tahun_pembelian_produk)%>%select(tahun_pembelian_produk, jumlah_order)%>%table(.)
+test_1
+barplot(test_1, beside = T, 
+        legend.text = rownames(test_1),
+        args.legend = list(
+    title = "Tahun", cex = 0.7,
+    x = "topleft"), col = c("red","yellow","green"), main = "Negera pembeli")
+
+```
+Dari grafik diatas kita mengetahui bahwa pasar terbesar kita mengalami penurunan, hal ini tidak boleh di abaikan kita harus mengevaluasi kenapa disana mengalami penurunan.
+
+ada dua indikasi yang bisa analisis untuk memprediksi kondisi tersebut, yang pertama adalah waktu pengiriman.
+
+#apakah ada pengaruh jarak dan banyaknya pembelian
+```{r}
+#cek tanggal apakah ada yang missing
+pr%>%count(order_status)
+
+
+pr_4 <- pr%>%
+  mutate(tanggal_proses  = 
+          as.Date(ifelse(order_status%in%"delivered", tanggal_diterima, 
+                  tanggal_pembelian), origin="1970-01-01"))%>%
+  mutate(waktu_proses = c(tanggal_proses - tanggal_pembelian))%>%group_by(ï..product_category_name)%>%summarise(waktu = as.integer(waktu_proses),price = mean(price), terjual = order_item_id)
+
+pr_4
+
+
+```
+```{r}
+plot(pr_4$terjual,pr_4$waktu, col = "red", bty = "n", pch = 2, xlab = "Jumlah Barang", ylab = "Lama Pengiriman(days)", main = "Lama Proses")
+```
+Bisa dilihat korelasi jumlah barang dan waktu pengiriman dari grafik diatas. Dari grafik diatas dapat disimpulkan bahwa lamanya waktu pengiriman berkaitan dengan jumlah barang yang dipesan. semakin lama waktu pengiriman maka semakin sedikit juga jumlah pemesanan terjadi.
+
+Dapat disimpulkan bahwa kita harus mengoptimal di jasa pengiriman untuk kepuasan pelanggan.
+
+yang kedua kita mencari tau bagaimana korelasi antara harga dan jumlah produk yang dipesan
+
+```{r}
+pr_4%>%mutate(total_produk_terjual = count())
+pr_5 <- pr_4%>%group_by(ï..product_category_name,price)%>%count()%>%ungroup()
+
+pr_5%>%mutate(harga_satuan = c(price/n))
+
+plot(pr_5$n,pr_5$price, col = "red", bty = "n",type = "p", pch = 5, xlab = "Jumlah Barang", ylab = "Harga", main = "Lama Proses")
+```
+Dapat dilihat bahwa harga barang tidak berpengaruh dengan produk yang dijual, sehingga kita tidak perlu membuat harga menjadi lebih murah, cukup dengan memperbaiki sistem distribusi barang agar tidak memakin waktu lama untuk proses pengiriman
