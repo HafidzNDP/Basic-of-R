@@ -1,3 +1,5 @@
+<img src="https://ujistatistikhalal.com/wp-content/uploads/2020/01/Rlogo.svg" width="50" height="50">
+
 # Introduce-of-R
 ## This is My History what I learned in Bootcamps Data Science using R
 - Working With Data 
