@@ -1,0 +1,990 @@
+---
+title: "Data Visualization Part 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(patchwork)
+library(ggrepel)
+library(echarts4r)
+library(leaflet)
+```
+
+
+```{r}
+# geolocation data
+geolocation_data <- read_delim(file = "https://raw.githubusercontent.com/hadimaster65555/dataset_for_teaching/main/dataset/sulawesi_hotspot_data/File%20Hotspot%20Pulau%20Sulawesi%20-%20(2016-2018).csv", delim = ";")
+
+# country data
+country_data <- read_csv(file = "https://raw.githubusercontent.com/hadimaster65555/dataset_for_teaching/main/dataset/country_dataset/Country-data.csv")
+
+# turnover data
+turnover_data <- read_csv(file = "https://raw.githubusercontent.com/hadimaster65555/dataset_for_teaching/main/dataset/quebit_turnover_dataset/dataset%20V2.csv")
+
+# Indonesia COVID19 data
+indocovid_data <- read_csv(file = "https://raw.githubusercontent.com/hadimaster65555/dataset_for_teaching/main/dataset/indocovid19/covid19_indonesia_datasets.csv")
+
+# amazon stock data
+amazon_data <- read_csv(file = "https://raw.githubusercontent.com/yumoxu/stocknet-dataset/master/price/raw/AMZN.csv")
+
+# michigan county
+michigan_county <- map_data(map = "county", "michigan")
+
+# indonesia map
+indonesia_map <- map_data(map = "world", region = "Indonesia")
+```
+
+# Customer Theme using theme() Function 
+
+*Before*
+
+```{r}
+# Layer 1: Country data
+country_data %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(
+    # Income
+    x = income, 
+    # Child Mortality
+    y = child_mort, 
+    # Inflation
+    size = inflation
+  )) + 
+  # Layer 3: Point geometry
+  geom_point() + 
+  # Layer 4: Change or add labels
+  labs(
+    title = "Child Morlatity vs Country Income & Inflation",
+    x = "Income",
+    y = "Child Mortality",
+    size = "Inflation"
+  ) -> plot_1
+```
+
+```{r}
+# see plot 1
+plot_1
+```
+
+## Customize Plot Elements
+
+**plot.background**
+
+```{r}
+# from plot_1
+plot_1 + 
+  # Customize theme
+  theme(
+    # customize plot background color with light blue
+    plot.background = element_rect(fill = "lightblue")
+  )
+```
+
+**plot.margin**
+
+```{r}
+# from plot_1
+plot_1 + 
+  # Customize theme
+  theme(
+    # add margin from top = 100 and bottom = 100
+    plot.margin = margin(t = 100, r = 0, b = 100, l = 0)
+  )
+```
+
+**plot.title**
+
+```{r}
+# from plot_1
+plot_1 + 
+  # Customize theme
+  theme(
+    # change font to bold and font family to OpenDyslexic 
+    # (if this font exist in your MS Word or LibreOffice)
+    plot.title = element_text(face = "italic", family = "OpenDyslexic")
+  )
+```
+
+## Customize Axis Elements
+
+**axis.line**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change axis line color to red with size 2
+    axis.line = element_line(colour = "red", size = 2)
+  )
+```
+
+**axis.text**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change all axis text color to blue and bold
+    axis.text = element_text(color = "blue", face = "bold")
+  )
+```
+
+**axis.text.x and axis.text.y**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change only x-axis text color to blue
+    axis.text.x = element_text(colour = "blue"),
+    # change only y-axis text color to green
+    axis.text.y = element_text(color = "green")
+  )
+```
+
+**axis.title**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change all axis title text color to blue and bold
+    axis.title = element_text(color = "blue", face = "bold")
+  )
+```
+
+**axis.title.x and axis.title.y**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change only x-axis title text color to blue
+    axis.title.x = element_text(color = "blue"),
+    # change only y-axis title text color to green
+    axis.title.y = element_text(color = "green")
+  )
+```
+
+## Customize Legend Elements
+
+**legend.background**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend background color to grey
+    legend.background = element_rect(fill = "grey")
+  )
+```
+
+**legend.key**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend key background color to grey
+    legend.key = element_rect(fill = "grey")
+  )
+```
+
+**legend.key.size**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend key size to 0.1 cm
+    legend.key.size = unit(0.1, "cm")
+  )
+```
+
+**legend.margin**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend margin with bottom = 200 pt
+    legend.margin = margin(t = 0, r = 0, b = 200, l = 0)
+  )
+```
+
+**legend.text**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend text with bold and size = 10, change color to blue
+    legend.text = element_text(face = "bold", size = 10, color = "blue")
+  )
+```
+
+**legend.title**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change legend title text with bold, change color to red
+    legend.title = element_text(face = "bold", color = "red")
+  )
+```
+
+## Customize Panel Elements
+
+**panel.background**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change panel background to lightblue
+    panel.background = element_rect(fill = "lightblue")
+  )
+```
+
+**panel.grid**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change panel grid color to black
+    panel.grid = element_line(colour = "black")
+  )
+```
+
+**panel.grid.major**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change major grid color to blue
+    panel.grid.major = element_line(color = "blue")
+  )
+```
+
+**panel.grid.minor**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change panel minor grid color to red and size to 1
+    panel.grid.minor = element_line(color = "red", size = 1)
+  )
+```
+
+**aspect.ratio**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change aspect ratio to 1:1
+    aspect.ratio = 1
+  )
+```
+
+**Use Multiple Theme**
+
+```{r}
+# from plot_1
+plot_1 +
+  # customize theme
+  theme(
+    # change plot title
+    plot.title = element_text(face = "bold", size = 12, margin = margin(r = 10)),
+    # Change legend background
+    legend.background = element_rect(fill = "white", colour = "gray"),
+    # axis tick
+    axis.ticks = element_line(colour = "black", size = 1),
+    # major panel grid
+    panel.grid.major = element_line(colour = "black", size = 0.05),
+    # minor panel grid
+    panel.grid.minor = element_line(colour = "black", size = 0.05),
+    # axis line
+    axis.line = element_line(colour = "red", size = 0.2),
+    # axis text
+    axis.text = element_text(face = "bold", size = 12),
+    # x-axis text
+    axis.title.x = element_text(face = "bold", size = 10),
+    # y-axis text
+    axis.title.y = element_text(face = "bold", size = 10),
+    # panel background
+    plot.background = element_rect(fill = "grey80"),
+    # panel background
+    panel.background = element_rect(fill = "linen"),
+    # legend text
+    legend.title = element_text(face = "bold")
+  )
+```
+
+# Visualize Map using ggplot2
+
+**Inspect Data**
+
+```{r}
+# from geolocation_data
+geolocation_data %>% 
+  # check data structure
+  glimpse()
+```
+
+**Point-Type**
+
+```{r}
+# Layer 1: Geolocation data
+geolocation_data %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = longitude, y = latitude)) +
+  # Layer 3: Point geometry
+  geom_point() + 
+  # Layer 4: Change catersian to map coordinate
+  coord_quickmap() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+```{r}
+# Layer 1: Geolocation data
+geolocation_data %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = longitude, y = latitude)) +
+  # Layer 3: Point geometry
+  geom_point(size = 2) + 
+  # Layer 4: Change catersian to map coordinate
+  coord_quickmap() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+**Polygon-Type**
+
+```{r}
+# Layer 1: Geolocation data
+michigan_county %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = long, y = lat, group = group)) +
+  # Layer 3: Point geometry
+  geom_polygon(fill = "white", color = "black") + 
+  # Layer 4: Change catersian to map coordinate
+  coord_quickmap() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+```{r}
+# Layer 1: Geolocation data
+indonesia_map %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = long, y = lat, group = group)) +
+  # Layer 3: Point geometry
+  geom_polygon(fill = "white", color = "black") + 
+  # Layer 4: Change catersian to map coordinate
+  coord_quickmap() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+# Arrange Plot Using Patchwork
+
+```{r}
+# Layer 1: Turnover data
+turnover_data %>% 
+  # count gender
+  count(gender) %>%
+  # Layer 2: Aesthetics
+  ggplot(aes(x = gender, y = n, fill = gender)) + 
+  # Layer 3: Column geometry
+  geom_col() +
+  # Layer 4: Eliminate legend
+  theme(legend.position = "none") -> p1
+
+# Layer 1: Turnover data
+turnover_data %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = position, y = salary, fill = position)) + 
+  # Layer 3: Violin Geometry
+  geom_violin() + 
+  # Layer 4: Flip Coordinate
+  coord_flip() +
+  # Layer 5: Eliminate legend
+  theme(legend.position = "none") -> p2
+
+# Layer 1: Turnover data
+turnover_data %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = senority, y = salary, col = salary)) + 
+  # Layer 3: Point Geometry
+  geom_point() -> p3
+
+# Layer 1: Turnover data
+turnover_data %>%
+  count(department) %>% 
+  # Layer 2: Aesthetics
+  ggplot(aes(x = department, y = n, fill = department)) + 
+  # Layer 3: Column Geometries
+  geom_col() +
+  # Layer 4: Remove legend
+  theme(legend.position = "none") + 
+  # Layer 5: Flip coordinate
+  coord_flip() -> p4
+```
+
+## Horizontal Arrangemenr by Using + Operator
+
+```{r}
+# add p1 and p2 horizontally
+p1 + p2
+```
+
+```{r}
+# add p1, p2 and p3 horizontally
+p1 + p2 + p3
+```
+
+## Vertical Arrangement by Using / Operator
+
+```{r}
+# add p1 and p2 vertically
+p1 / p2
+```
+
+```{r}
+# add p1, p2 and p3 vertivally
+p1 / p2 / p3
+```
+
+## Bind Vertical and Horizontal Arrangement
+
+```{r}
+# add p1 horizontally while p2 and p3 vertically
+p1 + p2 / p3
+```
+
+```{r}
+# add p2 vertically while p1 and p3 horizontally
+p2 / (p1 + p3)
+```
+
+## Bind Plots Using wrap_plot()
+
+```{r}
+# wrap all plot
+wrap_plots(p1, p2, p3, p4)
+```
+
+## Add Space With plot_spacer()
+
+**Without Plot Spacer**
+
+```{r}
+p1 + p2
+```
+
+**With Plot Spacer**
+
+```{r}
+# add p1 and p2 with spacer in between
+p1 + plot_spacer() + p2
+```
+
+## Controlling Grid by Using plot_layout()
+
+**Without plot_layout**
+
+```{r}
+p1 + p2 + p3 + p4
+```
+
+**Using plot_layout() with grid columns = 3**
+
+```{r}
+p1 + p2 + p4 + p3 + plot_layout(ncol = 3)
+```
+
+## Insert Plot Inside Another Plot With inset_element()
+
+```{r}
+p1 + inset_element(p3, left = 0.01, bottom = 0.6, right = 0.5, top = 1)
+```
+
+
+# Repel Text using ggrepel
+
+**Without ggrepel**
+
+```{r}
+set.seed(1000)
+
+# layer 1: Country data
+country_data %>% 
+  sample_n(size = 30) %>%
+  # Layer 2: Aesthetics
+  ggplot(aes(x = income, y = child_mort, label = country)) +
+  # Layer 3: Point Geometry
+  geom_point() + 
+  # Layer 4: Text Geometry (Add text)
+  geom_text() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+**With geom_text_repel()**
+
+```{r}
+set.seed(1000)
+
+# layer 1: Country data
+country_data %>% 
+  sample_n(size = 30) %>%
+  # Layer 2: Aesthetics
+  ggplot(aes(x = income, y = child_mort, label = country)) +
+  # Layer 3: Point Geometry
+  geom_point() + 
+  # Layer 4: Text Geometry and Repel them from point (Add text)
+  geom_text_repel() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+```{r}
+set.seed(1000)
+
+# layer 1: Country data
+country_data %>% 
+  sample_n(size = 30) %>%
+  # Layer 2: Aesthetics
+  ggplot(aes(x = income, y = child_mort, label = country)) +
+  # Layer 3: Point Geometry
+  geom_point() + 
+  # Layer 4: Label Geometry and Repel them from point (Add label)
+  geom_label_repel() + 
+  # Layer 5: Minimal theme
+  theme_minimal()
+```
+
+# Interactive Plot Using echarts4r
+
+## Basic Syntax
+
+```
+# from data
+data %>% 
+  # create echarts object with x vector
+  e_charts(x_vector) %>% 
+  # create chart with y vector
+  e_<chart_name>(y_vector)
+```
+
+## Scatter Plot with e_scatter()
+
+```{r}
+# from country data
+country_data %>% 
+  # call echarts object with x vector
+  e_charts(income) %>% 
+  # call e_scatter with chiild mortality as y vector
+  e_scatter(child_mort, size = inflation)
+```
+
+## Barplot with e_bar
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # count
+  count(gender) %>%
+  # call echarts object with gender as x axis
+  e_charts(gender) %>% 
+  # create bar chart with n as y axis and rename it as total employee
+  e_bar(n, name = "Total Employee")
+```
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # count
+  count(position) %>% 
+  # sort
+  arrange(n) %>% 
+  # call echarts object with position as x axis
+  e_charts(position) %>% 
+  # create bar chart with n as y axis and rename it as total employee
+  e_bar(n, name = "Total Employee") %>% 
+  # flip coordinates
+  e_flip_coords() %>% 
+  # add tooltip with item as a trigger
+  e_tooltip("item")
+```
+
+## Pie Chart with e_pie
+
+**Basic Pie Chart**
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # count
+  count(gender) %>%
+  # call echarts object with gender as x axis
+  e_charts(gender) %>% 
+  # create pie chart with n as y axis and rename it as total employee
+  e_pie(n, name = "Total Employee") %>% 
+  # add tooltip with item as trigger
+  e_tooltip("item")
+```
+
+**Donut Chart**
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # count
+  count(gender) %>%
+  # call echarts object with gender as x axis
+  e_charts(gender) %>% 
+  # create pie chart with n as y axis and rename it as total employee
+  e_pie(n, name = "Total Employee", radius = c("50%", "70%")) %>% 
+  # add tooltip with item as trigger
+  e_tooltip("item")
+```
+
+**Rosetype**
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # count
+  count(gender) %>%
+  # call echarts object with gender as x axis
+  e_charts(gender) %>% 
+  # create pie chart with n as y axis and rename it as total employee
+  e_pie(n, name = "Total Employee", roseType = "radius") %>% 
+  # add tooltip with item as trigger
+  e_tooltip("item")
+```
+
+## Line Chart with e_line
+
+```{r}
+# from indocovid data
+indocovid_data %>% 
+  # add e_charts object with day as x-axis
+  e_charts(day) %>%
+  # add line chart with new_cases_by_day as 1st y-axis
+  e_line(new_cases_by_day, smooth = T) %>% 
+  # add line chart with in_care_by_day as 2nd y-axis
+  e_line(in_care_by_day, smooth = T) %>% 
+  # add line chart with death_by_day as 3rd y-axis
+  e_line(death_by_day, smooth = T) %>% 
+  # add tooltip with axis as trigger
+  e_tooltip("axis")
+```
+
+```{r}
+# from indocovid data
+indocovid_data %>% 
+  # add e_charts object with day as x-axis
+  e_charts(day) %>%
+  # add line chart with new_cases_by_day as 1st y-axis
+  e_line(new_cases_by_day, smooth = T) %>% 
+  # add line chart with in_care_by_day as 2nd y-axis and on another index
+  e_line(in_care_by_day, smooth = T, x_index = 1, y_index = 1) %>%
+  # create grid with width around 35% of canvas
+  e_grid(width = "35%") %>%
+  # create grid with width around 35% of canvas and 55% from left
+  e_grid(width = "35%", left = "55%") %>% 
+  # create y axis on grid index 1
+  e_y_axis(gridIndex = 1) %>% 
+  # create x axis on grid index 1
+  e_x_axis(gridIndex = 1) %>% 
+  # add tooltip with axis as trigger
+  e_tooltip("axis")
+```
+
+## Funnel Chart with e_funnel
+
+```{r}
+# create funnel data
+funnel <- data.frame(
+  stage = c("View", "Click", "Purchase"), 
+  value = c(80, 30, 20)
+)
+
+# from funnel data
+funnel %>% 
+  # create e-charts object
+  e_charts() %>% 
+  # add funnel data with value and stage
+  e_funnel(value, stage)
+```
+
+## Heatmap with e_heatmap
+
+```{r}
+# from turnover data
+turnover_data %>% 
+  # group by position and education level
+  group_by(position, education_level) %>%
+  # count
+  count() %>%
+  # ungroup 
+  ungroup() %>%
+  # create e-chart object with position as x-axis
+  e_charts(position) %>% 
+  # create heatmap with education level as y-axis and n as z-axis
+  e_heatmap(education_level, n) %>% 
+  # add visual map
+  e_visual_map(n)
+```
+
+## Candlestick with e_candle
+
+```{r}
+# from amazon data
+amazon_data %>%
+  mutate(Date = as.character(Date)) %>% 
+  # add echart object with Date as x-axis
+  e_charts(Date) %>% 
+  # add Open, Close, Low, and High value of stock data
+  e_candle(opening = Open, closing = Close, low = Low, high = High) %>% 
+  # add zoom effect
+  e_datazoom(type = "slider") %>% 
+  # add title
+  e_title("Candlestick chart", "Quantmod data")
+```
+
+# River Chart with e_river
+
+```{r}
+date_data <- seq.Date(from = as.Date("2020-02-14"), to = as.Date("2020-02-14") + 55, by = "day")
+
+indocovid_data$date <- date_data
+
+indocovid_data %>% 
+  e_charts(date) %>% 
+  e_river(death_by_day) %>% 
+  e_river(in_care_by_day) %>% 
+  e_river(new_cases_by_day)
+```
+
+# Interactive Maps using Leaflet
+
+## Basic Tiles
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles()
+```
+
+## Map Provider
+
+**Stamen Toner**
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # using Stamen Toner tile
+  addProviderTiles(providers$Stamen.Toner)
+```
+
+**CartoDB Positron**
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # using CartoDB Positron tile
+  addProviderTiles(providers$CartoDB.Positron)
+```
+
+
+**ESRI NatGeoWorld**
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # using ESRI NatGeoWorld Map
+  addProviderTiles(providers$Esri.NatGeoWorldMap)
+```
+
+**Stamen Watercolor**
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # using Stamen Watercolor tile
+  addProviderTiles(providers$Stamen.Watercolor)
+```
+
+```{r}
+# call leaflet object
+leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # using ESRI NatGeoWorld Map
+  addProviderTiles(providers$OpenStreetMap.HOT)
+```
+
+## Markers
+
+**Basic Markers**
+
+```{r}
+# call leaflet object
+leaflet() %>%
+  # add tiles
+  addTiles() %>%  
+  # add marker
+  addMarkers(lng=174.768, lat=-36.852)
+```
+
+**Circle Markers**
+
+```{r}
+# call leaflet object
+leaflet() %>%
+  # add tiles
+  addTiles() %>%  
+  # add circle markers with radius
+  addCircleMarkers(lng=174.768, lat=-36.852, radius = 100)
+```
+
+**Circle**
+
+```{r}
+# call leaflet object
+leaflet() %>%
+  # add tiles
+  addTiles() %>%  
+  # add circle markers with radius
+  addCircles(lng=174.768, lat=-36.852, radius = 100)
+```
+
+## Pop-Up and Label
+
+**Pop-Up**
+
+```{r}
+# call leaflet object
+leaflet() %>%
+  # add tiles
+  addTiles() %>%  
+  # add marker and popup
+  addMarkers(lng=174.768, lat=-36.852, popup = "Place where R developed")
+```
+
+**Label**
+
+```{r}
+# call leaflet object
+leaflet() %>%
+  # add tiles
+  addTiles() %>%  
+  # add marker and label
+  addMarkers(lng=174.768, lat=-36.852, label = "Place where R developed")
+```
+
+## Add Data to Leaflet
+
+**Add Longitude and Latitude**
+
+```{r}
+set.seed(1000)
+
+# from geolocation data
+geolocation_data %>% 
+  # sampling data
+  sample_n(size = 100) %>% 
+  # call leaflet object
+  leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # add markers 
+  addMarkers(
+    lng = ~longitude,
+    lat = ~latitude
+  )
+```
+
+**Adding Cluster to Maps**
+
+```{r}
+set.seed(1000)
+
+# from geolocation data
+geolocation_data %>% 
+  # sampling data
+  sample_n(size = 1000) %>% 
+  # call leaflet object
+  leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # add markers 
+  addMarkers(
+    lng = ~longitude,
+    lat = ~latitude,
+    clusterOptions = markerClusterOptions()
+  )
+```
+
+**Add Custom Popup**
+
+```{r}
+# from quakes data
+quakes %>% 
+  # call leaflet object
+  leaflet() %>% 
+  # add tiles
+  addTiles() %>% 
+  # add markers
+  addMarkers(
+    lng = ~long,
+    lat = ~lat,
+    popup = ~paste0("depth: ", depth, ", mag:", mag, ", stations:", stations),
+    clusterOptions = markerClusterOptions()
+  )
+```
+
+
+
+
+
+

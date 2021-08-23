@@ -1,0 +1,40 @@
+---
+title: "Homework"
+output: html_document
+---
+
+
+
+```{r}
+# install.packages('leaflet')
+# load library
+library(leaflet)
+```
+
+
+# Track Directory
+```{r}
+getwd()
+```
+
+
+# Load the wealthiest_zips.Rda file based on your directory
+```{r}
+# This is my directory, don't follow!
+# load('/Users/calvinsibarani/Documents/R Script/Personal Project/Dibimbing/Data Viz Part 3/wealthiest_zips.Rda')
+
+# Load yours!
+load('wealthiest_zips.Rda')
+head(wealthy_zips)
+```
+
+# Assignment make visualization from leaflet! Use mean income!
+```{r}
+leaflet()%>%
+  addTiles()%>%
+    addProviderTiles(providers$Esri.NatGeoWorldMap)%>%
+      addPolygons(data = wealthy_zips, color = 'blue', label = paste("mean income: $",wealthy_zips@data$mean_income))
+```
+
+
+
